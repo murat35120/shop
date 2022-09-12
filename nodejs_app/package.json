@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "mysql2": "^2.3.3",
+    "uid-safe": "^2.1.5"
+  }
+}

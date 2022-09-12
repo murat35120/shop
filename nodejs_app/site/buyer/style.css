@@ -1,0 +1,87 @@
+div{  /* значения по умолчанию */
+  display: flex;  /* включили гибкое форматирование */
+}
+.first1 div {
+    padding: 5px;
+    margin: 5px;
+    border: solid;
+}
+
+ /* общий размер листа - во весь экран, делим его на колонки */
+.first{
+    flex-direction: row; /* родитель - направление главнеой оси в ряд, column */
+    justify-content: space-around; /* родитель - распределение содержимого по глпавной оси,flex-start, flex-end center, space-between */
+    align-items:stretch ; /* родитель -  выравнивание в поперечной оси stretch | center, flex-start, flex-end*/  
+    flex-grow: 1; /* сам - разрешает рост*/
+    flex-wrap:wrap; /* родитель - перос блоков, nowrap*/ 
+    height: 100%;
+}
+.main, .big{
+    flex-direction: column; /* родитель - направление главнеой оси в ряд, column */
+}
+.line{
+    flex-direction: row; /* родитель - направление главнеой оси в ряд, column */
+}
+.line, inputs{
+    justify-content: space-between;
+}
+
+.main, .buttons, .big{
+    justify-content: flex-start;
+}
+.line, .inputs{
+	flex-wrap:wrap;
+}
+
+
+ .main, .line>div {
+    flex-grow: 1;
+}
+
+ /* ------  Flax  ------  */
+body, input{
+ font-size:  16px;   /* кнопка не нажата*/  
+ font-family:  arial;   /* кнопка не нажата*/ 
+ font-style:  normal;   /* кнопка не нажата*/ 
+}
+
+div[data-action]{
+    border-radius: 5px;
+    background-color: rgb(218, 214, 214);
+	border-style: outset;
+	padding: 10px;
+    margin: 10px;
+}
+div[data-action]:active  {
+    border-style: inset;
+    background-color: rgb(237, 243, 241);    
+}
+
+ .main, .buttons>div, .inputs>input {
+    padding: 5px 10px;
+    margin: 5px 10px;
+}
+
+.buttons>div, .inputs>input {
+    text-align: center;
+}
+
+ .line>div {
+    padding: 1px 5px;
+    margin: 1px 5px;
+}
+
+.big>div:hover{
+    background-color: rgb(240, 255, 240);
+}
+.server{
+	color: #FF0000;
+}
+.controller{
+	color: #0000FF;
+}
+.line{
+    padding: 1px 5px;
+    margin: 1px 5px;
+	background-color: rgb(250, 250, 250);
+}
