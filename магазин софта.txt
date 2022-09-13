@@ -1,0 +1,89 @@
+Сервис приема заказов на программное обеспечение
+
+РОЛИ
+Клиент
+Продавец
+Менеджер
+Админ
+
+ТАБЛИЦЫ
+
+Заказы orders
+- номер порядковый key
+- номер внешний key_external
+- дата создания date_created
+- дата оплаты date_pay
+- дата лицензии date_make
+- дата завершения заказа date_end
+- номер клиента client_number
+- код товара article
+- цена price
+- валюта (рубль/балы) curency
+- промокод seller_code
+- продавец seller_number
+- премия продавца seller_bonus
+- получатель лицензии (JSON объекта требований для создания лицензии ) recipient
+- счет proforma
+- УПД invoice
+- лицензия license
+- дата отправки оригиналов документов date_shipment
+- дата возврата подписанного УПД date_receipt
+
+
+Абоненты abonents
+- номер абонента abonent_number
+- роль role  (buyer, seller, manager, admin)
+- паскей passkey
+- время паскей teme_passkey
+- автор паскей passkey_owner
+- имя name
+- логин login
+- хеш от логин+пароль+соль hash
+- сессия session
+- инн inn
+- адрес address
+- почта email
+- телеграмм telegram
+- контакты details
+- блокировать block
+- процент премии seller_bonus // предельное значение для менеджера и продавца
+
+Баланс balance
+- продавец seller_number
+- дата date_balance
+- баланс balance
+
+Промокоды seller_codes
+- промокод seller_code
+- продавец seller_number
+- дата окончания действия date_deadline
+- процент скидки для клиента client_bonus
+
+Сообщения messages
+- заказ  order
+- отправитель sender
+- текст message
+
+товар goods
+- тип товара (группа) type
+- код товара article_key
+- название товара title
+- описание товара description
+- цена товара розница price_retail
+- цена товара опт (минимальная) price_wholesale
+- JSON объекта описывающего требования для выписки лицензий recipient_desctription
+
+recipient_desctription (JSON объект)
+{ //общий список полей, все они не обязательные
+	number:number,
+	login:login,
+	old_value:old_value,
+	duration:duration,
+	date_start:date_start
+}
+
+
+
+
+
+

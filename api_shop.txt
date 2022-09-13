@@ -1,0 +1,301 @@
+Команды
+
+ВХОД
+Регистрация new_abonent
+Вход in_abonent
+Выход out_abonent
+Изменить пароль edit_password
+Проверить ИНН check_inn	
+
+
+УПРАВЛЯТЬ
+Создать пасскей new_passkey
+Получить список абонентов get_list_abonents
+Блокировать абонента edit_block
+Получить отчет get_report - перемещение пока не выполнено
+Импорт таблицы в базу import_table
+Экспорт таблицы из базы export_table
+
+ПРОДАВЕЦ
+Создать промокод new_seller_code
+Изменить промокод edit_seller_code (меняем дату до и %)
+Получить отчет get_report - нужно переместить в управление
+
+МЕНЕДЖЕР
+Изменить процент премии продавца edit_seller_bonus (меняем %)
+
+ЗАКАЗ
+Создать заказ new_order
+Получить список заказов get_list_orders
+
+КЛИЕНТ
+Редактировать юр лицо edit_buyer
+Оповещение в телеграм telegramm
+
+Общий вид запроса
+Строка JSON объекта запроса
+Обязательное свойство command, почти всегда есть session
+Наличие остальных полей зависят от command
+
+{
+	command:"command",
+	session:"session",
+	.....
+}
+---------------------------------------
+ВХОД
+---------------------------------------
+new_abonent ок
+{
+	command:"new_abonent",
+	passkey: passkey, //не обязательное поле
+	inn:inn,  //не обязательное поле
+	name:name,
+	login:login,
+	password:password
+}
+answer
+{
+	command:"new_abonent",
+	session:session
+}
+------------------------------------------
+in_abonent ок
+{
+	command:"in_abonent",
+	login:login,
+	password:password
+}
+answer
+{
+	command:"in_abonent",
+	session:session
+}
+------------------------------------------
+out_abonent
+{
+	command:"out_abonent",
+	session:session
+}
+answer //меняем сессию но значение не возвращаем
+{
+	command:"out_abonent",
+}
+---------------------------------------
+edit_password 
+{
+	command:"edit_password",
+	login:login,
+	password:password,
+	new_login:login,
+	new_password:password
+}
+answer
+{
+	command:"edit_password",
+	session:session
+}
+------------------------------------------
+check_inn 
+{
+	command:"check_inn",
+	inn:inn
+}
+answer
+{
+	command:"check_inn",
+	inn:inn,
+	kpp:kpp,
+	company_name:company_name,
+	legal_address:legal_address	
+}
+------------------------------------------
+УПРАВЛЯТЬ
+------------------------------------------
+new_passkey ок
+{
+	command:"new_passkey",
+	session:session,
+	name:name,
+	role:role,
+}
+answer
+{
+	command:"new_passkey",
+	name:name,
+	passkey: passkey
+}
+------------------------------------------
+get_list_abonents
+{
+	command:"get_list_abonents",
+	session:session,
+	role:role //не обязательное поле
+}
+answer
+{
+	command:"get_list_abonents",
+	list: list_abonents
+}
+list_abonents
+[
+	{abonent_number:abonent_number, role:role, name:name},
+	.......
+]
+------------------------------------------
+edit_block
+{
+	command:"edit_block",
+	session:session,
+	abonent_number:abonent_number,
+	block:"yes"/"no",
+}
+answer
+{
+	command:"edit_block",
+	name:name,
+	block:"yes"/"no"
+}
+------------------------------------------
+ПРОДАВЕЦ
+------------------------------------------
+new_seller_code
+{
+	command:"new_seller_code",
+	session:session,
+	date_deadline:date_deadline,
+	client_bonus:client_bonus
+}
+answer
+{
+	command:"new_seller_code",
+	seller_code:seller_code,
+	date_deadline:date_deadline,
+	client_bonus:client_bonus
+}
+------------------------------------------
+edit_seller_code
+{
+	command:"edit_seller_code",
+	session:session,
+	seller_code:seller_code,
+	date_deadline:date_deadline,
+	client_bonus:client_bonus
+}
+answer
+{
+	command:"edit_seller_code",
+	seller_code:seller_code,
+	date_deadline:date_deadline,
+	client_bonus:client_bonus
+}
+------------------------------------------
+get_report
+{
+	command:"get_report",
+	session:session,
+	from:date,
+	seller_number:seller_number //критерий поиска
+}
+answer
+{
+	command:"get_report",
+	from:date,
+	report:report_list
+}
+report_list
+[
+	{date_pay:date, proforma:proforma, 
+		price:price, seller_code:seller_code, curency:curency, seller_bonus:seller_bonus},
+	.....
+]
+------------------------------------------
+МЕНЕДЖЕР
+------------------------------------------
+edit_seller_bonus
+{
+	command:"edit_seller_bonus",
+	session:session,
+	abonent_number:abonent_number,
+	seller_bonus:seller_bonus
+}
+answer
+{
+	command:"edit_seller_bonus",
+	abonent_number:abonent_number,
+	seller_bonus:seller_bonus
+}
+-----------------------------------------
+ЗАКАЗ
+------------------------------------------
+new_order
+{
+	command:"new_order",
+	session:session,
+	article:article,
+	price:price,
+	currency:currency,
+	seller_code:seller_code  //не обязательное поле
+}
+answer
+{
+	command:"new_order",
+	article:article,
+	price:price,
+	currency:currency,
+	key:key	
+}
+------------------------------------------
+get_list_orders
+{
+	command:"get_list_orders",
+	session:session,
+	from:date,  //критерий поиска
+	to:date, //критерий поиска
+	key:key //критерий поиска
+}
+answer
+{
+	command:"get_list_orders",
+	list_orders:list_orders
+}
+list_orders
+[
+	{key:key, date_pay:date, date_make:date_make, date_end:date_end, proforma:proforma, 
+		article:article, price:price, curency:curency, seller_code:seller_code, 
+		seller_bonus:seller_bonus, recipient:recipient, invoice:invoice, license:license, 
+		date_shipment:date_shipment, date_receipt:date_receipt},
+	.....
+]
+------------------------------------------
+КЛИЕНТ
+------------------------------------------
+edit_buyer
+{
+	command:"edit_buyer",
+	session:session,
+	inn:inn,
+	address:address,
+	currency:currency,
+	email:email
+}
+answer
+{
+	command:"edit_buyer",
+	inn:inn,
+	address:address,
+	currency:currency,
+	email:email	
+}
+------------------------------------------
+telegram
+{
+	command:"telegram",
+	session:session,
+}
+answer
+{
+	command:"telegram",
+	chek_code:telegram	
+}
+------------------------------------------
