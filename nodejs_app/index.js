@@ -20,7 +20,7 @@ catch(e){
 	return;
 }
 let inns = new Set();
-inns.add("7801440951");
+inns.add("7801440958");  //для тестирования 
 const root=__dirname+"/site";
 const root1=__dirname+"/site/";
 const port_http=8080;
@@ -155,6 +155,7 @@ let functions={
 			} 
 		});
 	},
+	
 	check_command(req, res, obj){	
 		if(obj.data.command in commands){
 			commands[obj.data.command](req, res, obj);
@@ -195,13 +196,15 @@ let functions={
 
 let commands = {
 	//набор объектов содержащих последовательность функций
-	new_abonent:{
+	new_abonent:{ //тесты в postman manager ok, seller ok, buyer ok
 		start(req, res, data, obj){
 			switch(obj.role) {
 				case 'buyer': 
 					if(data.inn){
 						if(inns.has(data.inn)){
 							queryes.check_login(req, res, data, obj, commands.new_abonent.check_login);
+						}else{
+							functions.answer_send(res, "the inn is unknown");
 						}
 					}
 					else{
@@ -261,7 +264,7 @@ let commands = {
 				functions.answer_send(res, ansver);
 		},
 	},
-	in_abonent:{
+	in_abonent:{ //тесты в postman admin ok, manager ok, seller ok, buyer ok
 		start(req, res, data, obj){
 			obj.hash=scryptSync(data.password, salt, 32).toString('hex');
 			queryes.check_hash(req, res, data, obj, this.check_hash);
@@ -289,14 +292,15 @@ let commands = {
 				functions.answer_send(res, ansver);//нужно сделать ответ соответсчтвующим протоколу
 		},
 	},
-	out_abonent:{
+	out_abonent:{ //тесты в postman admin ok, manager ok, seller ok, buyer ok
 		start(req, res, data, obj){
+			obj.session=data.session;
 			queryes.session_check(req, res, data, obj, this.session_accept);
 		},
 		session_accept(req, res, data, obj){
 			if(obj.abonent){
 				obj.abonent_number=obj.abonent.abonent_number;
-				functions.new_session(req, res, data, obj, out_abonent, "new_session");
+				functions.new_session(req, res, data, obj, commands.out_abonent, "new_session");
 			}else{
 				functions.answer_send(res, "session is incorrect");
 			}
@@ -316,7 +320,7 @@ let commands = {
 				functions.answer_send(res, ansver);//нужно сделать ответ соответсчтвующим протоколу
 		},
 	},
-	new_passkey:{
+	new_passkey:{ //тесты в postman admin -> manager+seller ок, manager -> seller ok
 		start(req, res, data, obj){
 			obj.session=data.session;
 			queryes.session_check(req, res, data, obj, this.session_check);
@@ -334,16 +338,16 @@ let commands = {
 				commands.new_passkey.session_check(req, res, data, obj);
 			}else{
 				if(data.role&&data.name){
-					switch(obj.role) { //  тут
+					switch(obj.role) { //  роль отправившего запрос
 						case 'manager':
-							if(data.role=="seller"){
+							if(data.role=="seller"){ //роль в запросе
 								queryes.insert_staff(req, res, data, obj, commands.new_passkey.write_session);
 							}else{
 								functions.answer_send(res, "the role must be seller");
 							}
 						break;
 						case 'admin': 
-							if(data.role=="seller"||data.role=="manager"){
+							if(data.role=="seller"||data.role=="manager"){ //роль в запросе
 								queryes.insert_staff(req, res, data, obj, commands.new_passkey.write_session);
 							}else{
 								functions.answer_send(res, "the role must be seller or manager");
@@ -357,6 +361,84 @@ let commands = {
 				}
 			}
 		},
+		write_session(req, res, data, obj){
+			if(obj.abonent){
+				functions.answer_send(res, "there is a problem with saving");
+			}else{
+				let ansver={command:data.command, name:data.name, passkey:obj.passkey};
+				functions.answer_send(res, ansver);
+			}
+		}
+	},
+	edit_password:{ //тесты в postman buyer - ok 
+		start(req, res, data, obj){
+			obj.hash=scryptSync(data.password, salt, 32).toString('hex');
+			queryes.check_hash(req, res, data, obj, commands.edit_password.check_hash);
+		},
+		check_hash(req, res, data, obj){
+			if(obj.abonent){
+				obj.abonent_number=obj.abonent.abonent_number;
+				queryes.check_new_login(req, res, data, obj, commands.edit_password.check_login);
+			}else{
+				functions.answer_send(res, "the login or password is incorrect");
+			}
+		},
+		check_login(req, res, data, obj){
+			if(obj.abonent&&data.login!=data.new_login){
+				functions.answer_send(res, "the login is duplicate");
+			}else{
+				functions.new_session(req, res, data, obj, commands.edit_password, "new_password");
+			}
+		},
+		new_password(req, res, data, obj){
+			obj.hash=scryptSync(data.new_password, salt, 32).toString('hex');
+			queryes.edit_password(req, res, data, obj, commands.edit_password.new_session);
+		},
+		new_session(req, res, data, obj){
+			queryes.session_check(req, res, data, obj, commands.edit_password.session_check);
+		},
+		session_check(req, res, data, obj){
+			if(obj.abonent){
+				functions.new_session(req, res, data, obj, commands.edit_password, "new_session");
+			}else{
+				queryes.write_session(req, res, data, obj, commands.edit_password.write_session);
+			}
+		},
+		write_session(req, res, data, obj){
+			let ansver={command:data.command, session:obj.session};
+				functions.answer_send(res, ansver);
+		},
+	},
+	get_list_abonents{ //тесты в postman admin 
+		start(req, res, data, obj){
+			obj.session=data.session;
+			queryes.session_check(req, res, data, obj, this.session_check);
+		},	
+		session_check(req, res, data, obj){
+			if(obj.abonent){
+				switch(obj.role) { //  роль отправившего запрос
+					case 'manager':
+						data.roles="seller";
+						queryes.get_list_abonents(req, res, data, obj, commands.get_list_abonents.write_session);
+					break;
+					case 'admin': 
+						if(data.role=="seller"||data.role=="manager"){ //роль в запросе
+							data.roles=data.role;
+						}else{
+							data.roles="*";
+						}
+						queryes.get_list_abonents(req, res, data, obj, commands.get_list_abonents.write_session);
+					break;
+					default:
+						functions.answer_send(res, "the role is incorrect");
+				}
+			}else{
+				functions.answer_send(res, "the session is incorrect");
+			}
+		},
+		
+		
+
 		write_session(req, res, data, obj){
 			if(obj.abonent){
 				functions.answer_send(res, "there is a problem with saving");
@@ -390,6 +472,11 @@ let queryes={
 		obj.sql = 'SELECT * FROM abonents WHERE session=? AND role=?;';
 		this.base(req, res, data, obj, func);
 	},
+	get_list_abonents(req, res, data, obj, func){ //
+		obj.mass = [data.roles];
+		obj.sql = 'SELECT * FROM abonents WHERE role=?;';
+		this.base(req, res, data, obj, func);
+	},
 	write_session(req, res, data, obj, func){
 		obj.mass = [obj.session, obj.abonent_number];
 		obj.sql = "UPDATE abonents SET session=? WHERE abonent_number=? ";
@@ -397,6 +484,11 @@ let queryes={
 	},
 	check_login(req, res, data, obj, func){
 		obj.mass = [data.login];
+		obj.sql = 'SELECT * FROM abonents WHERE login=?;';
+		this.base(req, res, data, obj, func);
+	},
+	check_new_login(req, res, data, obj, func){
+		obj.mass = [data.new_login];
 		obj.sql = 'SELECT * FROM abonents WHERE login=?;';
 		this.base(req, res, data, obj, func);
 	},
@@ -413,6 +505,11 @@ let queryes={
 	edit_abonent(req, res, data, obj, func){
 		obj.mass = [obj.session, data.name, data.login, obj.hash, obj.abonent_number];
 		obj.sql = "UPDATE abonents SET session=?, name=?, login=?, hash=? WHERE abonent_number=? ";
+		this.base(req, res, data, obj, func);
+	},
+	edit_password(req, res, data, obj, func){
+		obj.mass = [data.new_login, obj.hash, obj.abonent_number];
+		obj.sql = "UPDATE abonents SET  login=?, hash=? WHERE abonent_number=? ";
 		this.base(req, res, data, obj, func);
 	},
 	base(req, res, data, obj, func){ //базовая функция

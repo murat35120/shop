@@ -5,7 +5,7 @@
 Вход in_abonent
 Выход out_abonent
 Изменить пароль edit_password
-Проверить ИНН check_inn	
+->	Проверить ИНН check_inn	
 
 
 УПРАВЛЯТЬ
@@ -28,7 +28,7 @@
 Создать заказ new_order
 Получить список заказов get_list_orders
 
-КЛИЕНТ
+ПОКУПАТЕЛЬ
 Редактировать юр лицо edit_buyer
 Оповещение в телеграм telegramm
 
@@ -72,7 +72,7 @@ answer
 	session:session
 }
 ------------------------------------------
-out_abonent
+out_abonent ok
 {
 	command:"out_abonent",
 	session:session
@@ -82,7 +82,7 @@ answer //меняем сессию но значение не возвращае
 	command:"out_abonent",
 }
 ---------------------------------------
-edit_password 
+edit_password ok
 {
 	command:"edit_password",
 	login:login,
@@ -130,7 +130,7 @@ get_list_abonents
 {
 	command:"get_list_abonents",
 	session:session,
-	role:role //не обязательное поле
+	role:role //не обязательное поле - если нет, то все доступные
 }
 answer
 {
