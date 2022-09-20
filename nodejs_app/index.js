@@ -327,6 +327,7 @@ let commands = {
 		},	
 		session_check(req, res, data, obj){
 			if(obj.abonent){
+				obj.passkey_owner=obj.abonent.abonent_number;
 				obj.passkey=functions.passkey_gen();
 				queryes.check_passkey(req, res, data, obj, commands.new_passkey.passkey_is);
 			}else{
@@ -416,10 +417,11 @@ let commands = {
 		},	
 		session_check(req, res, data, obj){
 			if(obj.abonent){
+				console.log(obj.abonent.block);
 				switch(obj.role) { //  роль отправившего запрос
 					case 'manager':
 						data.roles="seller"; //исправить!!  показываем только своих продажников
-						queryes.get_list_abonents(req, res, data, obj, commands.get_list_abonents.write_session);
+						queryes.get_list_abonents_3(req, res, data, obj, commands.get_list_abonents.write_session);
 					break;
 					case 'admin': 
 						if(data.role=="seller"||data.role=="manager"||data.role=="buyer"){ //роль в запросе
@@ -452,28 +454,27 @@ let queryes={
 	//набор функций заполняющих данные для запроса и вызывающие универсальный запрос
 	check_hash(req, res, data, obj, func){ //
 		obj.mass = [data.login, obj.hash, obj.role];
-		obj.sql = 'SELECT * FROM abonents WHERE login=? AND hash=? AND role=?;';
+		obj.sql = 'SELECT * FROM abonents WHERE login=? AND hash=? AND role=? AND (block IS NULL OR block=0);';
 		this.base(req, res, data, obj, func);
 	},
 	check_passkey(req, res, data, obj, func){ //
 		obj.mass = [data.passkey, obj.role];
-		//тут нужно добавить фильтр по времени создания паскей
 		obj.sql = 'SELECT * FROM abonents WHERE passkey=? AND role=? AND teme_passkey>TIMESTAMPADD (DAY, -3, NOW())';
 		this.base(req, res, data, obj, func);
 	},
 	session_check(req, res, data, obj, func){ //
 		obj.mass = [obj.session, obj.role];
-		obj.sql = 'SELECT * FROM abonents WHERE session=? AND role=?;';
+		obj.sql = 'SELECT * FROM abonents WHERE session=? AND role=? AND (block IS NULL OR block=0);';
 		this.base(req, res, data, obj, func);
 	},
 	get_list_abonents(req, res, data, obj, func){ //
 		obj.mass = [data.roles];
-		obj.sql = 'SELECT abonent_number, role, name FROM abonents WHERE role=?;';
+		obj.sql = 'SELECT abonent_number, role, name, block FROM abonents WHERE role=?;';
 		this.list(req, res, data, obj, func);
 	},
 	get_list_abonents_2(req, res, data, obj, func){ //
 		obj.mass = data.roles;
-		obj.sql = 'SELECT  abonent_number, role, name FROM abonents WHERE role=? OR role=?;';
+		obj.sql = 'SELECT  abonent_number, role, name, block FROM abonents WHERE role=? OR role=?;';
 		this.list(req, res, data, obj, func);
 	},
 	write_session(req, res, data, obj, func){
@@ -492,8 +493,8 @@ let queryes={
 		this.base(req, res, data, obj, func);
 	},
 	insert_staff(req, res, data, obj, func){
-		obj.mass = [data.role, obj.passkey, data.name];
-		obj.sql = "INSERT INTO abonents(role, passkey, name) VALUES (?, ?, ?)";
+		obj.mass = [data.role, obj.passkey, data.name, obj.passkey_owner];
+		obj.sql = "INSERT INTO abonents(role, passkey, name, passkey_owner) VALUES (?, ?, ?, ?)";
 		this.base(req, res, data, obj, func);
 	},
 	insert_abonent(req, res, data, obj, func){

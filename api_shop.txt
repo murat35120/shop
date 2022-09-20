@@ -139,7 +139,7 @@ answer
 }
 list_abonents
 [
-	{abonent_number:abonent_number, role:role, name:name},
+	{abonent_number:abonent_number, role:role, name:name, block:0(1)},
 	.......
 ]
 ------------------------------------------

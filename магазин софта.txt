@@ -38,7 +38,7 @@
 - автор паскей passkey_owner
 - имя name
 - логин login
-- хеш от логин+пароль+соль hash
+- хеш от пароль+соль hash
 - сессия session
 - инн inn
 - адрес address
