@@ -409,7 +409,7 @@ let commands = {
 				functions.answer_send(res, ansver);
 		},
 	},
-	get_list_abonents{ //тесты в postman admin 
+	get_list_abonents:{ //тесты в postman admin ок,  нужно доделать менеджера
 		start(req, res, data, obj){
 			obj.session=data.session;
 			queryes.session_check(req, res, data, obj, this.session_check);
@@ -418,16 +418,17 @@ let commands = {
 			if(obj.abonent){
 				switch(obj.role) { //  роль отправившего запрос
 					case 'manager':
-						data.roles="seller";
+						data.roles="seller"; //исправить!!  показываем только своих продажников
 						queryes.get_list_abonents(req, res, data, obj, commands.get_list_abonents.write_session);
 					break;
 					case 'admin': 
-						if(data.role=="seller"||data.role=="manager"){ //роль в запросе
+						if(data.role=="seller"||data.role=="manager"||data.role=="buyer"){ //роль в запросе
 							data.roles=data.role;
+							queryes.get_list_abonents(req, res, data, obj, commands.get_list_abonents.write_session);
 						}else{
-							data.roles="*";
+							data.roles=["seller", "manager"];
+							queryes.get_list_abonents_2(req, res, data, obj, commands.get_list_abonents.write_session);
 						}
-						queryes.get_list_abonents(req, res, data, obj, commands.get_list_abonents.write_session);
 					break;
 					default:
 						functions.answer_send(res, "the role is incorrect");
@@ -436,16 +437,9 @@ let commands = {
 				functions.answer_send(res, "the session is incorrect");
 			}
 		},
-		
-		
-
 		write_session(req, res, data, obj){
-			if(obj.abonent){
-				functions.answer_send(res, "there is a problem with saving");
-			}else{
-				let ansver={command:data.command, name:data.name, passkey:obj.passkey};
+			let ansver={command:data.command, list:obj.abonent};
 				functions.answer_send(res, ansver);
-			}
 		}
 	},
 }
@@ -474,8 +468,13 @@ let queryes={
 	},
 	get_list_abonents(req, res, data, obj, func){ //
 		obj.mass = [data.roles];
-		obj.sql = 'SELECT * FROM abonents WHERE role=?;';
-		this.base(req, res, data, obj, func);
+		obj.sql = 'SELECT abonent_number, role, name FROM abonents WHERE role=?;';
+		this.list(req, res, data, obj, func);
+	},
+	get_list_abonents_2(req, res, data, obj, func){ //
+		obj.mass = data.roles;
+		obj.sql = 'SELECT  abonent_number, role, name FROM abonents WHERE role=? OR role=?;';
+		this.list(req, res, data, obj, func);
 	},
 	write_session(req, res, data, obj, func){
 		obj.mass = [obj.session, obj.abonent_number];
@@ -517,6 +516,17 @@ let queryes={
 			if(err) console.log(err);
 			if(abonent.length){
 				obj.abonent=abonent[0];
+			} else{
+				obj.abonent='';
+			}
+			func(req, res, data, obj);
+		});
+	},
+	list(req, res, data, obj, func){ //базовая функция
+		connection.query(obj.sql, obj.mass, function(err, abonent) {
+			if(err) console.log(err);
+			if(abonent.length){
+				obj.abonent=abonent;
 			} else{
 				obj.abonent='';
 			}
