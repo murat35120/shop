@@ -126,7 +126,7 @@ answer
 	passkey: passkey
 }
 ------------------------------------------
-get_list_abonents
+get_list_abonents ok
 {
 	command:"get_list_abonents",
 	session:session,
@@ -143,18 +143,18 @@ list_abonents
 	.......
 ]
 ------------------------------------------
-edit_block
+edit_block ok
 {
 	command:"edit_block",
 	session:session,
 	abonent_number:abonent_number,
-	block:"yes"/"no",
+	block:0/1,
 }
 answer
 {
 	command:"edit_block",
-	name:name,
-	block:"yes"/"no"
+	abonent_number:abonent_number,
+	block:0/1
 }
 ------------------------------------------
 ПРОДАВЕЦ

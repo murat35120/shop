@@ -410,17 +410,17 @@ let commands = {
 				functions.answer_send(res, ansver);
 		},
 	},
-	get_list_abonents:{ //тесты в postman admin ок,  нужно доделать менеджера
-		start(req, res, data, obj){
+	get_list_abonents:{ //тесты в postman admin ок, manager ok
+		start(req, res, data, obj){ 
 			obj.session=data.session;
 			queryes.session_check(req, res, data, obj, this.session_check);
 		},	
 		session_check(req, res, data, obj){
-			if(obj.abonent){
-				console.log(obj.abonent.block);
+			if(obj.abonent){ //выбираем только зарегистрированных абонентов hash!=0
 				switch(obj.role) { //  роль отправившего запрос
 					case 'manager':
-						data.roles="seller"; //исправить!!  показываем только своих продажников
+						data.roles="seller"; //показываем только своих продажников
+						obj.abonent_number=obj.abonent.abonent_number;
 						queryes.get_list_abonents_3(req, res, data, obj, commands.get_list_abonents.write_session);
 					break;
 					case 'admin': 
@@ -444,6 +444,34 @@ let commands = {
 				functions.answer_send(res, ansver);
 		}
 	},
+	edit_block:{ //тесты в postman  admin ок, manager ok
+		start(req, res, data, obj){
+			obj.session=data.session;
+			queryes.session_check(req, res, data, obj, commands.edit_block.session_check);
+		},	
+		session_check(req, res, data, obj){
+			//console.log(JSON.stringify(obj.abonent));
+			if(obj.abonent){
+				obj.passkey_owner=obj.abonent.abonent_number;
+				switch(obj.role) { //  роль отправившего запрос
+					case 'manager':
+						queryes.edit_block(req, res, data, obj, commands.edit_block.write_session);
+					break;
+					case 'admin': 
+						queryes.edit_block_a(req, res, data, obj, commands.edit_block.write_session);
+					break;
+					default:
+						functions.answer_send(res, "the role is incorrect");
+				}
+			}else{
+				functions.answer_send(res, "the session is incorrect");
+			}
+		},
+		write_session(req, res, data, obj){
+			let ansver={command:data.command, abonent_number:data.abonent_number, block:data.block};
+			functions.answer_send(res, ansver);
+		}
+	},
 }
 
 
@@ -459,7 +487,7 @@ let queryes={
 	},
 	check_passkey(req, res, data, obj, func){ //
 		obj.mass = [data.passkey, obj.role];
-		obj.sql = 'SELECT * FROM abonents WHERE passkey=? AND role=? AND teme_passkey>TIMESTAMPADD (DAY, -3, NOW())';
+		obj.sql = 'SELECT * FROM abonents WHERE passkey=? AND role=? AND teme_passkey>TIMESTAMPADD (DAY, -3, NOW()) AND hash IS NULL;';
 		this.base(req, res, data, obj, func);
 	},
 	session_check(req, res, data, obj, func){ //
@@ -469,12 +497,17 @@ let queryes={
 	},
 	get_list_abonents(req, res, data, obj, func){ //
 		obj.mass = [data.roles];
-		obj.sql = 'SELECT abonent_number, role, name, block FROM abonents WHERE role=?;';
+		obj.sql = 'SELECT abonent_number, role, name, block FROM abonents WHERE role=?  AND hash IS NOT NULL;';
 		this.list(req, res, data, obj, func);
 	},
 	get_list_abonents_2(req, res, data, obj, func){ //
 		obj.mass = data.roles;
-		obj.sql = 'SELECT  abonent_number, role, name, block FROM abonents WHERE role=? OR role=?;';
+		obj.sql = 'SELECT  abonent_number, role, name, block FROM abonents WHERE (role=? OR role=?)  AND hash IS NOT NULL;';
+		this.list(req, res, data, obj, func);
+	},
+	get_list_abonents_3(req, res, data, obj, func){ //
+		obj.mass = [data.roles, obj.abonent_number];
+		obj.sql = 'SELECT abonent_number, role, name, block FROM abonents WHERE role=? AND passkey_owner=?  AND hash IS NOT NULL;';
 		this.list(req, res, data, obj, func);
 	},
 	write_session(req, res, data, obj, func){
@@ -510,6 +543,16 @@ let queryes={
 	edit_password(req, res, data, obj, func){
 		obj.mass = [data.new_login, obj.hash, obj.abonent_number];
 		obj.sql = "UPDATE abonents SET  login=?, hash=? WHERE abonent_number=? ";
+		this.base(req, res, data, obj, func);
+	},
+	edit_block(req, res, data, obj, func){
+		obj.mass = [data.block, data.abonent_number, obj.passkey_owner ];
+		obj.sql = "UPDATE abonents SET  block=? WHERE abonent_number=? AND passkey_owner=?";
+		this.base(req, res, data, obj, func);
+	},
+	edit_block_a(req, res, data, obj, func){
+		obj.mass = [data.block, data.abonent_number];
+		obj.sql = "UPDATE abonents SET  block=? WHERE abonent_number=?";
 		this.base(req, res, data, obj, func);
 	},
 	base(req, res, data, obj, func){ //базовая функция
