@@ -112,12 +112,13 @@ answer
 ------------------------------------------
 УПРАВЛЯТЬ
 ------------------------------------------
-new_passkey ок
+new_passkey ok
 {
 	command:"new_passkey",
 	session:session,
 	name:name,
 	role:role,
+	seller_bonus:seller_bonus  //не обязательное поле, по умолчанию 0
 }
 answer
 {
@@ -156,14 +157,61 @@ answer
 	abonent_number:abonent_number,
 	block:0/1
 }
+-------------------------------------------
+edit_seller_bonus  ok
+{
+	command:"edit_seller_bonus",
+	session:session,
+	abonent_number:abonent_number,
+	seller_bonus:seller_bonus
+}
+answer
+{
+	command:"edit_seller_bonus",
+	abonent_number:abonent_number,
+	seller_bonus:seller_bonus
+}
+
+------------------------------------------
+set_price_one  - поштучное добавление (редактирование)
+{
+	command:"set_price_one",
+	session:session,
+	price:price
+}
+answer
+{
+	command:"set_price_one",
+	write: 1/0
+}
+price
+{article_key:article_key, title:title, description:description, price_retail:price_retail, price_wholesale:price_wholesale }
+
+------------------------------------------
+read_price_list
+{
+	command:"read_price_list",
+	session:session,
+}
+answer
+{
+	command:"read_price_list",
+	price_list: price_list
+}
+price_list
+[
+	{article_key:article_key, title:title, description:description, price_retail:price_retail, price_wholesale:price_wholesale },
+	....
+]
+
 ------------------------------------------
 ПРОДАВЕЦ
 ------------------------------------------
-new_seller_code
+new_seller_code проверить скидку  ok
 {
 	command:"new_seller_code",
 	session:session,
-	date_deadline:date_deadline,
+	date_deadline:date_deadline, (количество дней которое действует код)
 	client_bonus:client_bonus
 }
 answer
@@ -174,12 +222,12 @@ answer
 	client_bonus:client_bonus
 }
 ------------------------------------------
-edit_seller_code
+edit_seller_code  проверить скидку  ok
 {
 	command:"edit_seller_code",
 	session:session,
 	seller_code:seller_code,
-	date_deadline:date_deadline,
+	date_deadline:date_deadline, (количество дней которое действует код)
 	client_bonus:client_bonus
 }
 answer
@@ -212,22 +260,27 @@ report_list
 ------------------------------------------
 МЕНЕДЖЕР
 ------------------------------------------
-edit_seller_bonus
-{
-	command:"edit_seller_bonus",
-	session:session,
-	abonent_number:abonent_number,
-	seller_bonus:seller_bonus
-}
-answer
-{
-	command:"edit_seller_bonus",
-	abonent_number:abonent_number,
-	seller_bonus:seller_bonus
-}
+
 -----------------------------------------
 ЗАКАЗ
 ------------------------------------------
+new_order_price
+{
+	command:"new_order",
+	session:session,
+	article:article,
+	price:price,
+	currency:currency,
+	seller_code:seller_code  //не обязательное поле
+}
+answer
+{
+	command:"new_order_price",
+	article:article,
+	price:price,
+	currency:currency
+}
+---------------------------------------------------
 new_order
 {
 	command:"new_order",
@@ -245,6 +298,8 @@ answer
 	currency:currency,
 	key:key	
 }
+
+
 ------------------------------------------
 get_list_orders
 {

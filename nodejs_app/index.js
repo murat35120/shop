@@ -327,6 +327,14 @@ let commands = {
 		},	
 		session_check(req, res, data, obj){
 			if(obj.abonent){
+				if(data.seller_bonus){
+					if(typeof(data.seller_bonus )!= "number"){
+						data.seller_bonus=0;
+					}
+				}else{
+					data.seller_bonus=0;
+				}
+				obj.manager_bonus=obj.abonent.seller_bonus;
 				obj.passkey_owner=obj.abonent.abonent_number;
 				obj.passkey=functions.passkey_gen();
 				queryes.check_passkey(req, res, data, obj, commands.new_passkey.passkey_is);
@@ -341,6 +349,9 @@ let commands = {
 				if(data.role&&data.name){
 					switch(obj.role) { //  роль отправившего запрос
 						case 'manager':
+							if(obj.manager_bonus<data.seller_bonus){
+								data.seller_bonus=obj.manager_bonus;
+							}
 							if(data.role=="seller"){ //роль в запросе
 								queryes.insert_staff(req, res, data, obj, commands.new_passkey.write_session);
 							}else{
@@ -366,7 +377,7 @@ let commands = {
 			if(obj.abonent){
 				functions.answer_send(res, "there is a problem with saving");
 			}else{
-				let ansver={command:data.command, name:data.name, passkey:obj.passkey};
+				let ansver={command:data.command, name:data.name, passkey:obj.passkey, seller_bonus:data.seller_bonus};
 				functions.answer_send(res, ansver);
 			}
 		}
@@ -472,8 +483,140 @@ let commands = {
 			functions.answer_send(res, ansver);
 		}
 	},
+	new_seller_code:{ //тесты в postman ok
+		start(req, res, data, obj){
+			obj.session=data.session;
+			queryes.session_check(req, res, data, obj, commands.new_seller_code.session_check);
+		},	
+		session_check(req, res, data, obj){
+			if(obj.abonent){
+				if(obj.abonent.seller_bonus<data.client_bonus){
+					data.client_bonus=obj.abonent.seller_bonus;
+				}
+				obj.seller_code=functions.passkey_gen();
+				queryes.seller_code_check(req, res, data, obj, commands.new_seller_code.seller_code_check);
+			}else{
+				functions.answer_send(res, "the session is incorrect");
+			}
+		},
+		seller_code_check(req, res, data, obj){
+			//console.log(JSON.stringify(obj.abonent));
+			if(obj.abonent){
+				session_check(req, res, data, obj);
+			}else{
+				obj.seller_number=obj.abonent.abonent_number;
+				obj.day=data.date_deadline;
+				queryes.new_seller_code(req, res, data, obj, commands.new_seller_code.write_session);	
+			}
+		},
+		write_session(req, res, data, obj){
+			let ansver={command:data.command, seller_code:obj.seller_code, date_deadline:data.date_deadline, client_bonus:data.client_bonus };
+			functions.answer_send(res, ansver);
+		}
+	},
+	edit_seller_code:{ //тесты в postman ok
+		start(req, res, data, obj){
+			obj.session=data.session;
+			queryes.session_check(req, res, data, obj, commands.edit_seller_code.session_check);
+		},	
+		session_check(req, res, data, obj){
+			if(obj.abonent){
+				if(obj.abonent.seller_bonus<data.client_bonus){
+					data.client_bonus=obj.abonent.seller_bonus;
+				}
+				obj.seller_code=data.seller_code;
+				obj.seller_number=obj.abonent.abonent_number;
+				obj.day=data.date_deadline;
+				queryes.edit_seller_code(req, res, data, obj, commands.edit_seller_code.write_session);
+			}else{
+				functions.answer_send(res, "the session is incorrect");
+			}
+		},
+		write_session(req, res, data, obj){
+			let ansver={command:data.command, seller_code:obj.seller_code, date_deadline:data.date_deadline, client_bonus:data.client_bonus };
+			functions.answer_send(res, ansver);
+		}
+	},
+	edit_seller_bonus:{ //тесты в postman  admin ок, manager ok
+		start(req, res, data, obj){
+			obj.session=data.session;
+			queryes.session_check(req, res, data, obj, commands.edit_seller_bonus.session_check);
+		},	
+		session_check(req, res, data, obj){
+			if(obj.abonent){
+				obj.passkey_owner=obj.abonent.abonent_number;
+				switch(obj.role) { //  роль отправившего запрос
+					case 'manager':
+						if(obj.abonent.seller_bonus<data.seller_bonus){
+							data.seller_bonus=obj.abonent.seller_bonus;
+						}
+						queryes.edit_seller_bonus(req, res, data, obj, commands.edit_seller_bonus.write_session);
+					break;
+					case 'admin': 
+						queryes.edit_seller_bonus_a(req, res, data, obj, commands.edit_seller_bonus.write_session);
+					break;
+					default:
+						functions.answer_send(res, "the role is incorrect");
+				}
+			}else{
+				functions.answer_send(res, "the session is incorrect");
+			}
+		},
+		write_session(req, res, data, obj){
+			let ansver={command:data.command, abonent_number:data.abonent_number, seller_bonus:data.seller_bonus };
+			functions.answer_send(res, ansver);
+		}
+	},
+	new_order_price:{ //тесты в postman
+		start(req, res, data, obj){
+			obj.session=data.session;
+			queryes.session_check(req, res, data, obj, commands.new_order_price.session_check);
+		},	
+		session_check(req, res, data, obj){
+			if(obj.abonent){
+				obj.abonent_number=obj.abonent.abonent_number;
+				queryes.seller_code_check(req, res, data, obj, commands.new_order_price.write_session);
+			}else{
+				functions.answer_send(res, "the session is incorrect");
+			}
+		},
+		write_session(req, res, data, obj){
+			let price=Math.round((100-obj.abonent.client_bonus)*data.price/10)/10;
+			let ansver={command:data.command, article:data.article, price:price, currency:data.currency };
+			functions.answer_send(res, ansver);
+		}
+	},
+	set_price_one:{ //тесты в postman
+		start(req, res, data, obj){
+			obj.session=data.session;
+			queryes.session_check(req, res, data, obj, commands.set_price_one.session_check);
+		},	
+		session_check(req, res, data, obj){
+			if(obj.abonent){
+				if(obj.abonent.role=="admin"){
+					obj.abonent_number=obj.abonent.abonent_number;
+					if(data.article){
+						queryes.dell_price_one(req, res, data, obj, commands.set_price_one.add_price_one);
+					}else{
+						functions.answer_send(res, "the article is incorrect");
+					}
+				}else{
+					functions.answer_send(res, "the role must be admin");
+				}
+			}else{
+				functions.answer_send(res, "the session is incorrect");
+			}
+		},
+		add_price_one(req, res, data, obj){
+			queryes.add_price_one(req, res, data, obj, commands.set_price_one.write_session);
+		},
+		write_session(req, res, data, obj){
+			let price=Math.round((100-obj.abonent.client_bonus)*data.price/10)/10;
+			let ansver={command:data.command, article:data.article, price:price, currency:data.currency };
+			functions.answer_send(res, ansver);
+		}
+	},
 }
-
 
 
 
@@ -525,9 +668,15 @@ let queryes={
 		obj.sql = 'SELECT * FROM abonents WHERE login=?;';
 		this.base(req, res, data, obj, func);
 	},
+	seller_code_check(req, res, data, obj, func){
+		obj.mass = [data.seller_code];
+		obj.sql = 'SELECT abonents.abonent_number AS seller_number, abonents.seller_bonus AS seller_bonus, seller_codes.client_bonus AS client_bonus FROM abonents INNER JOIN seller_codes ON abonents.abonent_number=seller_codes.seller_number WHERE seller_codes.seller_code=? ;';
+		this.base(req, res, data, obj, func);
+	},
+	
 	insert_staff(req, res, data, obj, func){
-		obj.mass = [data.role, obj.passkey, data.name, obj.passkey_owner];
-		obj.sql = "INSERT INTO abonents(role, passkey, name, passkey_owner) VALUES (?, ?, ?, ?)";
+		obj.mass = [data.role, obj.passkey, data.name, obj.passkey_owner, data.seller_bonus];
+		obj.sql = "INSERT INTO abonents(role, passkey, name, passkey_owner, seller_bonus) VALUES (?, ?, ?, ?, ?)";
 		this.base(req, res, data, obj, func);
 	},
 	insert_abonent(req, res, data, obj, func){
@@ -535,6 +684,11 @@ let queryes={
 		obj.sql = "INSERT INTO abonents(login, hash, role,  inn, name, session) VALUES (?, ?, ?, ?, ?, ?)";
 		this.base(req, res, data, obj, func);
 	},	
+	new_seller_code(req, res, data, obj, func){
+		obj.mass = [obj.seller_code, obj.seller_number,  obj.day, data.client_bonus];
+		obj.sql = "INSERT INTO seller_codes(seller_code, seller_number, date_deadline, client_bonus) VALUES (?, ?, TIMESTAMPADD(DAY, +?, NOW()), ?)";
+		this.base(req, res, data, obj, func);
+	},
 	edit_abonent(req, res, data, obj, func){
 		obj.mass = [obj.session, data.name, data.login, obj.hash, obj.abonent_number];
 		obj.sql = "UPDATE abonents SET session=?, name=?, login=?, hash=? WHERE abonent_number=? ";
@@ -555,6 +709,32 @@ let queryes={
 		obj.sql = "UPDATE abonents SET  block=? WHERE abonent_number=?";
 		this.base(req, res, data, obj, func);
 	},
+	edit_seller_code(req, res, data, obj, func){
+		obj.mass = [obj.day, data.client_bonus, data.seller_code, obj.seller_number];
+		obj.sql = "UPDATE seller_codes SET  date_deadline=TIMESTAMPADD(DAY, +?, NOW()),  client_bonus=? WHERE seller_code=? AND seller_number=?";
+		this.base(req, res, data, obj, func);
+	},	
+	edit_seller_bonus(req, res, data, obj, func){
+		obj.mass = [data.seller_bonus, data.abonent_number, obj.passkey_owner];
+		obj.sql = "UPDATE abonents SET  seller_bonus=? WHERE abonent_number=? AND passkey_owner=?";
+		this.base(req, res, data, obj, func);
+	},
+	edit_seller_bonus_a(req, res, data, obj, func){
+		obj.mass = [data.seller_bonus, obj.passkey_owner, data.abonent_number ];
+		obj.sql = "UPDATE abonents SET seller_bonus=?, passkey_owner=? WHERE abonent_number=? ";
+		this.base(req, res, data, obj, func);
+	},
+	dell_price_one(req, res, data, obj, func){
+		obj.mass = [data.article];
+		obj.sql = "DELETE FROM goods WHERE article_key=?";
+		this.base(req, res, data, obj, func);
+	},
+	add_price_one(req, res, data, obj, func){
+		obj.mass = [data.price.article_key, data.price.title, data.price.description, data.price.price_retail, data.price.price_wholesale];
+		obj.sql = "INSERT INTO seller_codes(article_key, title, description, price_retail, price_wholesale) VALUES (?, ?, ?, ?, ?)";
+		this.base(req, res, data, obj, func);
+	},
+	
 	base(req, res, data, obj, func){ //базовая функция
 		connection.query(obj.sql, obj.mass, function(err, abonent) {
 			if(err) console.log(err);
@@ -598,6 +778,20 @@ Date.prototype.format = function(format = 'yyyy-mm-dd') {
 
 functions.check_admin();
 
-
-
+//-----------------TEST--------------------------------------
+function check_hash(){ 
+let obj={};
+	obj.mass = [755172];
+	obj.sql = 'SELECT abonents.abonent_number AS seller_number, abonents.seller_bonus AS seller_bonus, seller_codes.client_bonus AS client_bonus FROM abonents INNER JOIN seller_codes ON abonents.abonent_number=seller_codes.seller_number WHERE seller_codes.seller_code=? ;';
+	connection.query(obj.sql, obj.mass, function(err, abonent) {
+		if(err) console.log(err);
+		if(abonent.length){
+			obj.abonent=abonent[0];
+		} else{
+			obj.abonent='';
+		}
+		console.log(JSON.stringify(obj.abonent));
+	});
+}
+//check_hash();
 
