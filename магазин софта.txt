@@ -16,7 +16,7 @@
 - дата лицензии date_make
 - дата завершения заказа date_end
 - номер клиента client_number
-- код товара article
+- код товара article  int
 - цена price
 - валюта (рубль/балы) curency
 - промокод seller_code
@@ -28,6 +28,16 @@
 - лицензия license
 - дата отправки оригиналов документов date_shipment
 - дата возврата подписанного УПД date_receipt
+
+recipient (JSON объект)
+{ //общий список полей, все они не обязательные
+	number:number,
+	login:text,
+	domen:text
+	article_key_old:text,
+	duration:duration,
+	date_start:date_start
+}
 
 
 Абоненты abonents
@@ -65,24 +75,28 @@
 - текст message
 
 товар goods
-- тип товара (группа) type
-- код товара article_key
+- софт (группа) soft  int
+- код товара article_key  int
 - название товара title
 - описание товара description
 - цена товара розница price_retail
 - цена товара опт (минимальная) price_wholesale
-- JSON объекта описывающего требования для выписки лицензий recipient_desctription
+
+список групп товаров  soft
+- софт (группа) id_soft  int
+- название группы товара title_group
+- описание группы товара description_group
+- описание объекта требований для создания лицензии recipient_desctription
 
 recipient_desctription (JSON объект)
 { //общий список полей, все они не обязательные
 	number:number,
-	login:login,
-	old_value:old_value,
+	login:text,
+	domen:text
+	article_key_old:text,
 	duration:duration,
 	date_start:date_start
 }
-
-
 
 
 

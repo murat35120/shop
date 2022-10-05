@@ -203,6 +203,24 @@ price_list
 	{article_key:article_key, title:title, description:description, price_retail:price_retail, price_wholesale:price_wholesale },
 	....
 ]
+------------------------------------------
+set_groop  - создать (редактировать) группу = soft  ok
+{
+	command:"set_groop",
+	session:session,
+	title_group:title_group,
+	description_group:description_group,
+	recipient_desctription:recipient_desctription
+}
+answer
+{
+	command:"set_groop",
+	id_soft: number
+}
+------------------------------------------
+
+
+
 
 ------------------------------------------
 ПРОДАВЕЦ
@@ -271,7 +289,7 @@ new_order_price
 	article:article,
 	price:price,
 	currency:currency,
-	seller_code:seller_code  //не обязательное поле
+	seller_code:seller_code,	//не обязательное поле
 }
 answer
 {
@@ -281,14 +299,15 @@ answer
 	currency:currency
 }
 ---------------------------------------------------
-new_order
+new_order 
 {
 	command:"new_order",
 	session:session,
 	article:article,
 	price:price,
 	currency:currency,
-	seller_code:seller_code  //не обязательное поле
+	seller_code:seller_code,  //не обязательное поле
+	recipient:recipient
 }
 answer
 {
@@ -301,6 +320,29 @@ answer
 
 
 ------------------------------------------
+edit_order  // редактируем заказ. 
+//Клиент может добавить recipient
+//менеджер может изменить стоимость
+{
+	command:"edit_order",
+	session:session,
+	order:order,
+	price:price,
+	currency:currency,
+	recipient:recipient
+}
+answer
+{
+	command:"edit_order",
+	order:order,
+	price:price,
+	currency:currency,
+	recipient:recipient	
+}
+
+
+------------------------------------------
+
 get_list_orders
 {
 	command:"get_list_orders",

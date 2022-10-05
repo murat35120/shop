@@ -616,6 +616,42 @@ let commands = {
 			functions.answer_send(res, ansver);
 		}
 	},
+	set_groop:{ //тесты в postman ok
+		start(req, res, data, obj){
+			obj.session=data.session;
+			queryes.session_check(req, res, data, obj, commands.set_groop.session_check);
+		},	
+		session_check(req, res, data, obj){
+			if(obj.abonent){
+				if(obj.abonent.role=="admin"){
+					if(data.title_group){
+						data.title_group=data.title_group.trim(); //обрезать пробелы вначале и конце
+						queryes.check_title_group(req, res, data, obj, commands.set_groop.add_groop);
+					}else{
+						functions.answer_send(res, "the title_group is incorrect");
+					}
+				}else{
+					functions.answer_send(res, "the role must be admin");
+				}
+			}else{
+				functions.answer_send(res, "the session is incorrect");
+			}
+		},
+		add_groop(req, res, data, obj){
+			if(obj.abonent){
+				obj.id_soft=obj.abonent.id_soft;
+				queryes.edit_group(req, res, data, obj, commands.set_groop.write_session);
+			}else{
+				obj.id_soft=0;
+				queryes.new_group(req, res, data, obj, commands.set_groop.write_session);
+			}
+		},
+		write_session(req, res, data, obj){
+			//console.log(JSON.stringify(obj.abonent));
+			let ansver={command:data.command, id_soft:obj.id_soft};
+			functions.answer_send(res, ansver);
+		}
+	},
 }
 
 
@@ -673,7 +709,11 @@ let queryes={
 		obj.sql = 'SELECT abonents.abonent_number AS seller_number, abonents.seller_bonus AS seller_bonus, seller_codes.client_bonus AS client_bonus FROM abonents INNER JOIN seller_codes ON abonents.abonent_number=seller_codes.seller_number WHERE seller_codes.seller_code=? ;';
 		this.base(req, res, data, obj, func);
 	},
-	
+	check_title_group(req, res, data, obj, func){
+		obj.mass = [data.title_group];
+		obj.sql = 'SELECT * FROM soft WHERE title_group=?;';
+		this.base(req, res, data, obj, func);
+	},
 	insert_staff(req, res, data, obj, func){
 		obj.mass = [data.role, obj.passkey, data.name, obj.passkey_owner, data.seller_bonus];
 		obj.sql = "INSERT INTO abonents(role, passkey, name, passkey_owner, seller_bonus) VALUES (?, ?, ?, ?, ?)";
@@ -687,6 +727,11 @@ let queryes={
 	new_seller_code(req, res, data, obj, func){
 		obj.mass = [obj.seller_code, obj.seller_number,  obj.day, data.client_bonus];
 		obj.sql = "INSERT INTO seller_codes(seller_code, seller_number, date_deadline, client_bonus) VALUES (?, ?, TIMESTAMPADD(DAY, +?, NOW()), ?)";
+		this.base(req, res, data, obj, func);
+	},
+	new_group(req, res, data, obj, func){
+		obj.mass = [data.title_group, data.description_group, data.recipient_desctription];
+		obj.sql = "INSERT INTO soft(title_group, description_group, recipient_desctription) VALUES (?, ?, ?)";
 		this.base(req, res, data, obj, func);
 	},
 	edit_abonent(req, res, data, obj, func){
@@ -724,6 +769,11 @@ let queryes={
 		obj.sql = "UPDATE abonents SET seller_bonus=?, passkey_owner=? WHERE abonent_number=? ";
 		this.base(req, res, data, obj, func);
 	},
+	edit_group(req, res, data, obj, func){
+		obj.mass = [data.description_group, data.recipient_desctription, data.title_group ];
+		obj.sql = "UPDATE soft SET description_group=?, recipient_desctription=? WHERE title_group=? ";
+		this.base(req, res, data, obj, func);
+	},
 	dell_price_one(req, res, data, obj, func){
 		obj.mass = [data.article];
 		obj.sql = "DELETE FROM goods WHERE article_key=?";
@@ -742,6 +792,9 @@ let queryes={
 				obj.abonent=abonent[0];
 			} else{
 				obj.abonent='';
+			}
+			if(abonent.insertId){
+				obj.id_soft=abonent.insertId;
 			}
 			func(req, res, data, obj);
 		});
