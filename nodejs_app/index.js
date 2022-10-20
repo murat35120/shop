@@ -170,7 +170,7 @@ let functions={
 			//console.log("send object");
 		}else{
 			res.end(msg);
-			console.log(msg);
+			//console.log(msg);
 		}
 	},
 	new_session(req, res, data, obj, func_obj, func_name){
@@ -567,7 +567,7 @@ let commands = {
 			functions.answer_send(res, ansver);
 		}
 	},
-	new_order_price:{ //тесты в postman
+	new_order_price:{ //тесты в postman ok - нужна проверка бонусов клиента, продавца и предельной цены
 		start(req, res, data, obj){
 			obj.session=data.session;
 			queryes.session_check(req, res, data, obj, commands.new_order_price.session_check);
@@ -575,28 +575,57 @@ let commands = {
 		session_check(req, res, data, obj){
 			if(obj.abonent){
 				obj.abonent_number=obj.abonent.abonent_number;
-				queryes.seller_code_check(req, res, data, obj, commands.new_order_price.write_session);
+				queryes.seller_code_check(req, res, data, obj, commands.new_order_price.read_good);
 			}else{
 				functions.answer_send(res, "the session is incorrect");
 			}
 		},
+		read_good(req, res, data, obj){
+			if(obj.abonent){ //если есть что заполнять  по коду должны получить seller_number
+				obj.seller_bonus=obj.abonent.seller_bonus;
+				obj.seller_number=obj.abonent.seller_number;
+				obj.client_bonus=obj.abonent.client_bonus;
+			}else{
+				console.log('seller_code is incprrect');
+			}
+			queryes.read_good(req, res, data, obj, commands.new_order_price.write_session);
+		},
 		write_session(req, res, data, obj){
-			let price=Math.round((100-obj.abonent.client_bonus)*data.price/10)/10;
-			let ansver={command:data.command, article:data.article, price:price, currency:data.currency };
+	
+//{"role":"buyer","session":"DEQOUmOuobssZuaWWeEZwvp4","mass":[123457],"sql":"SELECT * FROM goods WHERE goods.article_key=? ;",
+//"abonent":{"article_key":123457,"soft":2,"title":"license 10/256","description":"license 10/256 the is config",
+//"price_retail":45,"price_wholesale":40},"abonent_number":49,"seller_bonus":10,"seller_number":31,"client_bonus":10}
+			
+			if(obj.client_bonus>obj.seller_bonus){
+				obj.client_bonus=obj.seller_bonus; 
+			}
+			let price=Math.round((100-obj.client_bonus)*obj.abonent.price_retail/10)/10;
+			if(price<obj.abonent.price_wholesale){
+				price=obj.abonent.price_wholesale;
+			}
+			let ansver={command:data.command, article:data.article, title:obj.abonent.title, price:price, currency:data.currency };
 			functions.answer_send(res, ansver);
 		}
 	},
-	set_price_one:{ //тесты в postman
+	set_price:{ //тесты в postman ok
 		start(req, res, data, obj){
 			obj.session=data.session;
-			queryes.session_check(req, res, data, obj, commands.set_price_one.session_check);
+			queryes.session_check(req, res, data, obj, commands.set_price.session_check);
 		},	
 		session_check(req, res, data, obj){
 			if(obj.abonent){
 				if(obj.abonent.role=="admin"){
 					obj.abonent_number=obj.abonent.abonent_number;
-					if(data.article){
-						queryes.dell_price_one(req, res, data, obj, commands.set_price_one.add_price_one);
+					if(data.price_list.length){
+						let keys=[];
+						let lines=[];
+						for(let i=0; i<data.price_list.length; i++){
+							keys.push(data.price_list[i].article_key);
+							lines.push([data.price_list[i].article_key, data.price_list[i].soft, data.price_list[i].title, data.price_list[i].description, data.price_list[i].price_retail, data.price_list[i].price_wholesale]);
+						}
+						obj.keys=keys;
+						obj.lines=lines;
+						queryes.dell_price(req, res, data, obj, commands.set_price.add_price);
 					}else{
 						functions.answer_send(res, "the article is incorrect");
 					}
@@ -607,13 +636,14 @@ let commands = {
 				functions.answer_send(res, "the session is incorrect");
 			}
 		},
-		add_price_one(req, res, data, obj){
-			queryes.add_price_one(req, res, data, obj, commands.set_price_one.write_session);
+		add_price(req, res, data, obj){
+			queryes.add_price(req, res, data, obj, commands.set_price.write_session);
 		},
 		write_session(req, res, data, obj){
-			let price=Math.round((100-obj.abonent.client_bonus)*data.price/10)/10;
-			let ansver={command:data.command, article:data.article, price:price, currency:data.currency };
-			functions.answer_send(res, ansver);
+			//let price=Math.round((100-obj.abonent.client_bonus)*data.price/10)/10;
+			//let ansver={command:data.command, article:data.article, price:price, currency:data.currency };
+			//functions.answer_send(res, ansver);
+			functions.answer_send(res, JSON.stringify(data));
 		}
 	},
 	set_groop:{ //тесты в postman ok
@@ -652,6 +682,22 @@ let commands = {
 			functions.answer_send(res, ansver);
 		}
 	},
+	read_price:{ //тесты в postman ok
+		start(req, res, data, obj){
+			obj.session=data.session;
+			queryes.session_check(req, res, data, obj, commands.read_price.session_check);
+		},	
+		session_check(req, res, data, obj){
+			if(obj.abonent){
+						queryes.read_price(req, res, data, obj, commands.read_price.write_session);
+			}else{
+				functions.answer_send(res, "the session is incorrect");
+			}
+		},
+		write_session(req, res, data, obj){
+			functions.answer_send(res, JSON.stringify(obj.abonent));
+		}
+	}
 }
 
 
@@ -714,6 +760,16 @@ let queryes={
 		obj.sql = 'SELECT * FROM soft WHERE title_group=?;';
 		this.base(req, res, data, obj, func);
 	},
+	read_price(req, res, data, obj, func){
+		obj.mass = [data.title_group];
+		obj.sql = 'SELECT goods.* FROM goods, soft WHERE goods.soft=soft.id_soft AND soft.title_group=? ;';
+		this.base_mass(req, res, data, obj, func);
+	},
+	read_good(req, res, data, obj, func){
+		obj.mass = [data.article];
+		obj.sql = 'SELECT * FROM goods WHERE goods.article_key=? ;';
+		this.base(req, res, data, obj, func);
+	},
 	insert_staff(req, res, data, obj, func){
 		obj.mass = [data.role, obj.passkey, data.name, obj.passkey_owner, data.seller_bonus];
 		obj.sql = "INSERT INTO abonents(role, passkey, name, passkey_owner, seller_bonus) VALUES (?, ?, ?, ?, ?)";
@@ -774,15 +830,15 @@ let queryes={
 		obj.sql = "UPDATE soft SET description_group=?, recipient_desctription=? WHERE title_group=? ";
 		this.base(req, res, data, obj, func);
 	},
-	dell_price_one(req, res, data, obj, func){
-		obj.mass = [data.article];
-		obj.sql = "DELETE FROM goods WHERE article_key=?";
-		this.base(req, res, data, obj, func);
+	dell_price(req, res, data, obj, func){
+		obj.mass = obj.keys;
+		obj.sql = "DELETE FROM goods WHERE article_key IN (?)";
+		this.base_mass(req, res, data, obj, func);
 	},
-	add_price_one(req, res, data, obj, func){
-		obj.mass = [data.price.article_key, data.price.title, data.price.description, data.price.price_retail, data.price.price_wholesale];
-		obj.sql = "INSERT INTO seller_codes(article_key, title, description, price_retail, price_wholesale) VALUES (?, ?, ?, ?, ?)";
-		this.base(req, res, data, obj, func);
+	add_price(req, res, data, obj, func){
+		obj.mass = obj.lines;
+		obj.sql = "INSERT INTO goods(article_key, soft, title, description, price_retail, price_wholesale) VALUES ?";
+		this.base_mass(req, res, data, obj, func);
 	},
 	
 	base(req, res, data, obj, func){ //базовая функция
@@ -795,6 +851,18 @@ let queryes={
 			}
 			if(abonent.insertId){
 				obj.id_soft=abonent.insertId;
+			}
+			func(req, res, data, obj);
+		});
+	},
+	base_mass(req, res, data, obj, func){ //базовая функция
+		connection.query(obj.sql, [obj.mass], function(err, abonent) {
+			if(err) console.log(err);
+			//obj.abonent=abonent;
+			if(abonent.length){
+				obj.abonent=abonent;
+			} else{
+				obj.abonent='';
 			}
 			func(req, res, data, obj);
 		});
@@ -843,7 +911,7 @@ let obj={};
 		} else{
 			obj.abonent='';
 		}
-		console.log(JSON.stringify(obj.abonent));
+		//console.log(JSON.stringify(obj.abonent));
 	});
 }
 //check_hash();

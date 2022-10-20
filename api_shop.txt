@@ -96,7 +96,7 @@ answer
 	session:session
 }
 ------------------------------------------
-check_inn 
+check_inn 									++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 {
 	command:"check_inn",
 	inn:inn
@@ -173,25 +173,29 @@ answer
 }
 
 ------------------------------------------
-set_price_one  - поштучное добавление (редактирование)
+set_price  - добавление (редактирование)  ok
 {
-	command:"set_price_one",
+	command:"set_price",
 	session:session,
-	price:price
+	price_list:price_list
 }
 answer
 {
-	command:"set_price_one",
+	command:"set_price",
 	write: 1/0
 }
-price
-{article_key:article_key, title:title, description:description, price_retail:price_retail, price_wholesale:price_wholesale }
+price_list
+[
+	{article_key:article_key, soft:2,  title:title, description:description, price_retail:price_retail, price_wholesale:price_wholesale },
+	....
+]
 
 ------------------------------------------
-read_price_list
+read_price_list   ok
 {
 	command:"read_price_list",
 	session:session,
+	title_group:title_group
 }
 answer
 {
@@ -256,7 +260,7 @@ answer
 	client_bonus:client_bonus
 }
 ------------------------------------------
-get_report
+get_report									++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 {
 	command:"get_report",
 	session:session,
@@ -282,13 +286,11 @@ report_list
 -----------------------------------------
 ЗАКАЗ
 ------------------------------------------
-new_order_price
+new_order_price  (получаем стоимость заказа, без регистрации заказа)
 {
-	command:"new_order",
+	command:"new_order_price",
 	session:session,
 	article:article,
-	price:price,
-	currency:currency,
 	seller_code:seller_code,	//не обязательное поле
 }
 answer
@@ -304,8 +306,6 @@ new_order
 	command:"new_order",
 	session:session,
 	article:article,
-	price:price,
-	currency:currency,
 	seller_code:seller_code,  //не обязательное поле
 	recipient:recipient
 }
