@@ -586,16 +586,11 @@ let commands = {
 				obj.seller_number=obj.abonent.seller_number;
 				obj.client_bonus=obj.abonent.client_bonus;
 			}else{
-				console.log('seller_code is incprrect');
+				//console.log('seller_code is incprrect');
 			}
 			queryes.read_good(req, res, data, obj, commands.new_order_price.write_session);
 		},
 		write_session(req, res, data, obj){
-	
-//{"role":"buyer","session":"DEQOUmOuobssZuaWWeEZwvp4","mass":[123457],"sql":"SELECT * FROM goods WHERE goods.article_key=? ;",
-//"abonent":{"article_key":123457,"soft":2,"title":"license 10/256","description":"license 10/256 the is config",
-//"price_retail":45,"price_wholesale":40},"abonent_number":49,"seller_bonus":10,"seller_number":31,"client_bonus":10}
-			
 			if(obj.client_bonus>obj.seller_bonus){
 				obj.client_bonus=obj.seller_bonus; 
 			}
@@ -603,10 +598,58 @@ let commands = {
 			if(price<obj.abonent.price_wholesale){
 				price=obj.abonent.price_wholesale;
 			}
-			let ansver={command:data.command, article:data.article, title:obj.abonent.title, price:price, currency:data.currency };
+			let ansver={command:data.command, article:data.article, title:obj.abonent.title, price:price};//, currency:data.currency 
 			functions.answer_send(res, ansver);
 		}
 	},
+	new_order:{ //тесты в postman ok - нужна проверка бонусов клиента, продавца и предельной цены
+		start(req, res, data, obj){
+			obj.session=data.session;
+			queryes.session_check(req, res, data, obj, commands.new_order.session_check);
+		},	
+		session_check(req, res, data, obj){
+			if(obj.abonent){
+				obj.client_number=obj.abonent.abonent_number;
+				queryes.seller_code_check(req, res, data, obj, commands.new_order.read_good);
+			}else{
+				functions.answer_send(res, "the session is incorrect");
+			}
+		},
+		read_good(req, res, data, obj){
+			if(obj.abonent){ //если есть что заполнять  по коду должны получить seller_number
+				obj.seller_bonus=obj.abonent.seller_bonus;
+				obj.seller_number=obj.abonent.seller_number;
+				obj.client_bonus=obj.abonent.client_bonus;
+			}else{
+				//console.log('seller_code is incprrect');
+				obj.seller_bonus=0;
+				obj.seller_number=0;
+				obj.client_bonus=0;
+			}
+			queryes.read_good(req, res, data, obj, commands.new_order.save_order);
+		},
+		save_order(req, res, data, obj){
+			if(obj.abonent){ //если есть что заполнять  по коду должны получить seller_number		
+				if(obj.client_bonus>obj.seller_bonus){
+					obj.client_bonus=obj.seller_bonus; 
+				}
+				let price=Math.round((100-obj.client_bonus)*obj.abonent.price_retail/10)/10;
+				if(price<obj.abonent.price_wholesale){
+					price=obj.abonent.price_wholesale;
+				}
+				obj.price=price;
+				obj.title=obj.abonent.title;
+			}else{
+				//console.log('seller_code is incprrect');
+			}
+			queryes.save_order(req, res, data, obj, commands.new_order.write_session);
+		},
+		write_session(req, res, data, obj){
+			let ansver={command:data.command, article:data.article, title:obj.title, price:obj.price }; //currency:data.currency
+			functions.answer_send(res, ansver);
+		}
+	},
+	
 	set_price:{ //тесты в postman ok
 		start(req, res, data, obj){
 			obj.session=data.session;
@@ -788,6 +831,11 @@ let queryes={
 	new_group(req, res, data, obj, func){
 		obj.mass = [data.title_group, data.description_group, data.recipient_desctription];
 		obj.sql = "INSERT INTO soft(title_group, description_group, recipient_desctription) VALUES (?, ?, ?)";
+		this.base(req, res, data, obj, func);
+	},
+	save_order(req, res, data, obj, func){
+		obj.mass = [obj.client_number, data.article, obj.price, data.seller_code,  obj.seller_number, obj.seller_bonus, obj.client_bonus, data.recipient];
+		obj.sql = "INSERT INTO orders(client_number, article, price, seller_code, seller_number, seller_bonus, client_bonus, recipient) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 		this.base(req, res, data, obj, func);
 	},
 	edit_abonent(req, res, data, obj, func){

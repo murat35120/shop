@@ -297,6 +297,7 @@ answer
 {
 	command:"new_order_price",
 	article:article,
+	title:title,
 	price:price,
 	currency:currency
 }
@@ -306,6 +307,7 @@ new_order
 	command:"new_order",
 	session:session,
 	article:article,
+	title:title,
 	seller_code:seller_code,  //не обязательное поле
 	recipient:recipient
 }
