@@ -299,7 +299,7 @@ answer
 	article:article,
 	title:title,
 	price:price,
-	currency:currency
+	//currency:currency
 }
 ---------------------------------------------------
 new_order 
@@ -307,7 +307,6 @@ new_order
 	command:"new_order",
 	session:session,
 	article:article,
-	title:title,
 	seller_code:seller_code,  //не обязательное поле
 	recipient:recipient
 }
@@ -315,8 +314,9 @@ answer
 {
 	command:"new_order",
 	article:article,
+	title:title,
 	price:price,
-	currency:currency,
+	//currency:currency,
 	key:key	
 }
 
@@ -330,7 +330,7 @@ edit_order  // редактируем заказ.
 	session:session,
 	order:order,
 	price:price,
-	currency:currency,
+	//currency:currency,
 	recipient:recipient
 }
 answer

@@ -645,7 +645,54 @@ let commands = {
 			queryes.save_order(req, res, data, obj, commands.new_order.write_session);
 		},
 		write_session(req, res, data, obj){
-			let ansver={command:data.command, article:data.article, title:obj.title, price:obj.price }; //currency:data.currency
+			let ansver={command:data.command, article:data.article, title:obj.title, price:obj.price, key:obj.id_soft };
+			functions.answer_send(res, ansver);
+		}
+	},
+	edit_order:{ //тесты в postman
+		start(req, res, data, obj){
+			obj.session=data.session;
+			queryes.session_check(req, res, data, obj, commands.new_order.session_check);
+		},	
+		session_check(req, res, data, obj){
+			if(obj.abonent){
+				obj.client_number=obj.abonent.abonent_number;
+				queryes.seller_code_check(req, res, data, obj, commands.new_order.read_good);
+			}else{
+				functions.answer_send(res, "the session is incorrect");
+			}
+		},
+		read_good(req, res, data, obj){
+			if(obj.abonent){ //если есть что заполнять  по коду должны получить seller_number
+				obj.seller_bonus=obj.abonent.seller_bonus;
+				obj.seller_number=obj.abonent.seller_number;
+				obj.client_bonus=obj.abonent.client_bonus;
+			}else{
+				//console.log('seller_code is incprrect');
+				obj.seller_bonus=0;
+				obj.seller_number=0;
+				obj.client_bonus=0;
+			}
+			queryes.read_good(req, res, data, obj, commands.new_order.save_order);
+		},
+		save_order(req, res, data, obj){
+			if(obj.abonent){ //если есть что заполнять  по коду должны получить seller_number		
+				if(obj.client_bonus>obj.seller_bonus){
+					obj.client_bonus=obj.seller_bonus; 
+				}
+				let price=Math.round((100-obj.client_bonus)*obj.abonent.price_retail/10)/10;
+				if(price<obj.abonent.price_wholesale){
+					price=obj.abonent.price_wholesale;
+				}
+				obj.price=price;
+				obj.title=obj.abonent.title;
+			}else{
+				//console.log('seller_code is incprrect');
+			}
+			queryes.save_order(req, res, data, obj, commands.save_order.write_session);
+		},
+		write_session(req, res, data, obj){
+			let ansver={command:data.command, article:data.article, title:obj.title, price:obj.price, key:obj.id_soft }; //currency:data.currency, key:obj.key
 			functions.answer_send(res, ansver);
 		}
 	},
