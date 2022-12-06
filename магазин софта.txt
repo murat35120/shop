@@ -9,7 +9,7 @@
 ТАБЛИЦЫ
 
 Заказы orders
-- номер порядковый key
+- номер порядковый order_num
 - номер внешний key_external
 - дата создания date_created
 - дата оплаты date_pay

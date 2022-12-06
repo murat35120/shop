@@ -649,53 +649,111 @@ let commands = {
 			functions.answer_send(res, ansver);
 		}
 	},
-	edit_order:{ //тесты в postman
+	edit_order:{ //тесты в postman автор ок, менеджер ок - нужно добавить проверку статуса заказа 
 		start(req, res, data, obj){
 			obj.session=data.session;
-			queryes.session_check(req, res, data, obj, commands.new_order.session_check);
+			queryes.session_check(req, res, data, obj, commands.edit_order.session_check);
 		},	
 		session_check(req, res, data, obj){
 			if(obj.abonent){
-				obj.client_number=obj.abonent.abonent_number;
-				queryes.seller_code_check(req, res, data, obj, commands.new_order.read_good);
+				obj.abonent_number=obj.abonent.abonent_number;
+				obj.role=obj.abonent.role;
+				queryes.read_order(req, res, data, obj, commands.edit_order.read_order);
 			}else{
 				functions.answer_send(res, "the session is incorrect");
 			}
 		},
-		read_good(req, res, data, obj){
-			if(obj.abonent){ //если есть что заполнять  по коду должны получить seller_number
-				obj.seller_bonus=obj.abonent.seller_bonus;
-				obj.seller_number=obj.abonent.seller_number;
-				obj.client_bonus=obj.abonent.client_bonus;
-			}else{
-				//console.log('seller_code is incprrect');
-				obj.seller_bonus=0;
-				obj.seller_number=0;
-				obj.client_bonus=0;
-			}
-			queryes.read_good(req, res, data, obj, commands.new_order.save_order);
-		},
-		save_order(req, res, data, obj){
-			if(obj.abonent){ //если есть что заполнять  по коду должны получить seller_number		
-				if(obj.client_bonus>obj.seller_bonus){
-					obj.client_bonus=obj.seller_bonus; 
+		read_order(req, res, data, obj){
+			if(1){ //проверка статуса заказа !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+				if(obj.abonent){ 
+					let flag=0;
+					if(obj.role=="manager"){
+						if(data.price){
+							queryes.edit_order_price(req, res, data, obj, commands.edit_order.write_session);
+							obj.price=data.price;
+						}else{
+							obj.price=obj.abonent.price;
+						}
+						flag=1;
+					}
+					if(obj.abonent_number==obj.abonent.client_number){
+						queryes.edit_order_recipient(req, res, data, obj, commands.edit_order.write_session);
+						obj.recipient=data.recipient;
+						flag=1;
+					} else{
+						obj.recipient=obj.abonent.recipient;
+					}
+					if(flag==0){
+						functions.answer_send(res, "you can't do that");
+					}
+				}else{
+					functions.answer_send(res, "the order is incorrect");
 				}
-				let price=Math.round((100-obj.client_bonus)*obj.abonent.price_retail/10)/10;
-				if(price<obj.abonent.price_wholesale){
-					price=obj.abonent.price_wholesale;
-				}
-				obj.price=price;
-				obj.title=obj.abonent.title;
-			}else{
-				//console.log('seller_code is incprrect');
+			} else{
+				functions.answer_send(res, "this order cannot be edited");
 			}
-			queryes.save_order(req, res, data, obj, commands.save_order.write_session);
 		},
 		write_session(req, res, data, obj){
-			let ansver={command:data.command, article:data.article, title:obj.title, price:obj.price, key:obj.id_soft }; //currency:data.currency, key:obj.key
+			let ansver={command:data.command, order:data.order, price:obj.price, recipient:obj.recipient }; //currency:data.currency
 			functions.answer_send(res, ansver);
 		}
 	},
+
+	get_list_orders:{ //тесты в postman автор , менеджер ok,  buyer ok, seller ok
+		start(req, res, data, obj){
+			obj.session=data.session;
+			queryes.session_check(req, res, data, obj, commands.get_list_orders.session_check);
+		},	
+		session_check(req, res, data, obj){
+			if(obj.abonent){
+				obj.abonent_number=obj.abonent.abonent_number;
+				obj.role=obj.abonent.role;
+				obj.mass=[];
+				switch (obj.abonent.role) {
+				  case "manager":
+					obj.sql = 'SELECT * FROM orders WHERE 1';
+					//obj.mass = [obj.abonent_number];
+					break;
+				  case "seller":
+					obj.sql = 'SELECT DISTINCT order_num, key_external, date_created, date_make, article, price, orders.seller_code, seller_bonus, proforma, invoice  FROM orders, seller_codes WHERE ((seller_codes.seller_number=? AND orders.seller_code=seller_codes.seller_code) OR orders.client_number=?)';
+					obj.mass = [obj.abonent_number, obj.abonent_number];
+					break;
+				  case "buyer":
+					obj.sql = 'SELECT  order_num, key_external, date_created, date_make, article, price, proforma, invoice  FROM orders WHERE client_number=?';
+					obj.mass = [obj.abonent_number];
+					break;
+				  default:
+					functions.answer_send(res, "the role is incorrect");
+				}
+				if(data.from){
+					obj.sql=obj.sql+" AND DATE(date_created)>=?";
+					obj.mass.push(data.from);
+				}
+				if(data.to){
+					obj.sql=obj.sql+" AND DATE(date_created)<=?";
+					obj.mass.push(data.to);
+				}
+				if(data.key){
+					obj.sql=obj.sql+" AND order_num=?";
+					obj.mass.push(data.key);
+				}
+				obj.sql=obj.sql+";";
+				//console.log("sql - "+obj.sql);
+				//console.log("data - "+obj.mass);
+				queryes.get_list_orders(req, res, data, obj, commands.get_list_orders.write_session);
+			}else{
+				functions.answer_send(res, "the session is incorrect");
+			}
+		},
+		write_session(req, res, data, obj){
+			//console.log("list - "+obj.abonent);
+			let ansver={command:data.command, list_orders:obj.abonent};
+			functions.answer_send(res, ansver);
+		}
+	},
+
+
+
 	
 	set_price:{ //тесты в postman ok
 		start(req, res, data, obj){
@@ -857,8 +915,16 @@ let queryes={
 	},
 	read_good(req, res, data, obj, func){
 		obj.mass = [data.article];
-		obj.sql = 'SELECT * FROM goods WHERE goods.article_key=? ;';
+		obj.sql = 'SELECT * FROM goods WHERE goods.article_key=?;';
 		this.base(req, res, data, obj, func);
+	},
+	read_order(req, res, data, obj, func){
+		obj.mass = [data.order];
+		obj.sql = 'SELECT * FROM orders WHERE order_num=?;';
+		this.base(req, res, data, obj, func);
+	},
+	get_list_orders(req, res, data, obj, func){
+		this.list(req, res, data, obj, func);
 	},
 	insert_staff(req, res, data, obj, func){
 		obj.mass = [data.role, obj.passkey, data.name, obj.passkey_owner, data.seller_bonus];
@@ -884,6 +950,11 @@ let queryes={
 		obj.mass = [obj.client_number, data.article, obj.price, data.seller_code,  obj.seller_number, obj.seller_bonus, obj.client_bonus, data.recipient];
 		obj.sql = "INSERT INTO orders(client_number, article, price, seller_code, seller_number, seller_bonus, client_bonus, recipient) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 		this.base(req, res, data, obj, func);
+	},
+	add_price(req, res, data, obj, func){
+		obj.mass = obj.lines;
+		obj.sql = "INSERT INTO goods(article_key, soft, title, description, price_retail, price_wholesale) VALUES ?";
+		this.base_mass(req, res, data, obj, func);
 	},
 	edit_abonent(req, res, data, obj, func){
 		obj.mass = [obj.session, data.name, data.login, obj.hash, obj.abonent_number];
@@ -925,17 +996,21 @@ let queryes={
 		obj.sql = "UPDATE soft SET description_group=?, recipient_desctription=? WHERE title_group=? ";
 		this.base(req, res, data, obj, func);
 	},
+	edit_order_price(req, res, data, obj, func){
+		obj.mass = [data.price, data.order ];
+		obj.sql = "UPDATE orders SET price=? WHERE order_num=? ";
+		this.base(req, res, data, obj, func);
+	},
+	edit_order_recipient(req, res, data, obj, func){
+		obj.mass = [data.recipient, data.order ];
+		obj.sql = "UPDATE orders SET recipient=? WHERE order_num=? ";
+		this.base(req, res, data, obj, func);
+	},
 	dell_price(req, res, data, obj, func){
 		obj.mass = obj.keys;
 		obj.sql = "DELETE FROM goods WHERE article_key IN (?)";
 		this.base_mass(req, res, data, obj, func);
 	},
-	add_price(req, res, data, obj, func){
-		obj.mass = obj.lines;
-		obj.sql = "INSERT INTO goods(article_key, soft, title, description, price_retail, price_wholesale) VALUES ?";
-		this.base_mass(req, res, data, obj, func);
-	},
-	
 	base(req, res, data, obj, func){ //базовая функция
 		connection.query(obj.sql, obj.mass, function(err, abonent) {
 			if(err) console.log(err);
@@ -965,8 +1040,10 @@ let queryes={
 	list(req, res, data, obj, func){ //базовая функция
 		connection.query(obj.sql, obj.mass, function(err, abonent) {
 			if(err) console.log(err);
+			//console.log("length - "+abonent.length);
 			if(abonent.length){
 				obj.abonent=abonent;
+				//console.log("list - "+obj.abonent);
 			} else{
 				obj.abonent='';
 			}

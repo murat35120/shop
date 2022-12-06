@@ -5,16 +5,17 @@
 Вход in_abonent
 Выход out_abonent
 Изменить пароль edit_password
-->	Проверить ИНН check_inn	
+->	Проверить ИНН check_inn	    +++++++++++++++++++++++++++++++++++++
 
 
 УПРАВЛЯТЬ
 Создать пасскей new_passkey
 Получить список абонентов get_list_abonents
 Блокировать абонента edit_block
-Получить отчет get_report - перемещение пока не выполнено
-Импорт таблицы в базу import_table
-Экспорт таблицы из базы export_table
+Получить отчет get_report - перемещение пока не выполнено   ++++++++++++++++++++++
+	информация о начислении по бонусам для менеджера (начислить продавцу), для продавца (сверка)
+Импорт таблицы в базу import_table  --------------??????
+Экспорт таблицы из базы export_table --------------??????
 
 ПРОДАВЕЦ
 Создать промокод new_seller_code
@@ -29,8 +30,9 @@
 Получить список заказов get_list_orders
 
 ПОКУПАТЕЛЬ
-Редактировать юр лицо edit_buyer
-Оповещение в телеграм telegramm
+Редактировать юр лицо edit_buyer			+++++++++++++++++++++++++++++++++++
+	редактируем адрес, валюту, почту
+Оповещение в телеграм telegramm				+++++++++++++++++++++++++++++++++++++
 
 Общий вид запроса
 Строка JSON объекта запроса
@@ -286,7 +288,7 @@ report_list
 -----------------------------------------
 ЗАКАЗ
 ------------------------------------------
-new_order_price  (получаем стоимость заказа, без регистрации заказа)
+new_order_price  (получаем стоимость заказа, без регистрации заказа)  ok
 {
 	command:"new_order_price",
 	session:session,
@@ -302,7 +304,7 @@ answer
 	//currency:currency
 }
 ---------------------------------------------------
-new_order 
+new_order   ok
 {
 	command:"new_order",
 	session:session,
@@ -322,8 +324,8 @@ answer
 
 
 ------------------------------------------
-edit_order  // редактируем заказ. 
-//Клиент может добавить recipient
+edit_order  // редактируем заказ.   ок
+//автор  и  менеджер могут изменить recipient
 //менеджер может изменить стоимость
 {
 	command:"edit_order",
@@ -338,14 +340,17 @@ answer
 	command:"edit_order",
 	order:order,
 	price:price,
-	currency:currency,
+	//currency:currency,
 	recipient:recipient	
 }
 
 
 ------------------------------------------
 
-get_list_orders
+get_list_orders manager ok, buyer ok, seller ok
+//для покупателя - свои, 
+//для продавца свои + по своим кодам, 
+//для менеджера все
 {
 	command:"get_list_orders",
 	session:session,
@@ -359,6 +364,9 @@ answer
 	list_orders:list_orders
 }
 list_orders
+for manager - all
+for seller -own AND my seller codes
+for buyer - own
 [
 	{key:key, date_pay:date, date_make:date_make, date_end:date_end, proforma:proforma, 
 		article:article, price:price, curency:curency, seller_code:seller_code, 
@@ -369,11 +377,10 @@ list_orders
 ------------------------------------------
 КЛИЕНТ
 ------------------------------------------
-edit_buyer
+edit_buyer				+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 {
 	command:"edit_buyer",
 	session:session,
-	inn:inn,
 	address:address,
 	currency:currency,
 	email:email
@@ -387,7 +394,7 @@ answer
 	email:email	
 }
 ------------------------------------------
-telegram
+telegram				++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 {
 	command:"telegram",
 	session:session,
